@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>纪念日</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      background: #000;
+      position: relative;
+      overflow-x: hidden;
+      overflow: hidden; /* 禁止页面滚动 */
+      font-family: '微软雅黑', 'Arial', sans-serif;
+      color: #fff;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      z-index: 0;
+      background: url('2.png') center center / cover no-repeat;
+      background-attachment: fixed;
+      opacity: 0.92;
+      pointer-events: none;
+      transition: opacity 0.5s;
+    }
+    .container {
+      position: relative;
+      z-index: 2;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 30px 10px 20px 10px;
+      background: rgba(255,255,255,0.12);
+      border-radius: 24px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+      margin-top: 8vh;
+      text-align: center;
+    }
+    h1 {
+      font-size: 2.6em;
+      margin-bottom: 0.2em;
+      letter-spacing: 2px;
+      color: #ead24a;
+      text-shadow: 0 2px 8px #ea80b0, 0 0 20px #fff;
+    }
+    .days {
+      font-size: 2.2em;
+      margin-bottom: 1.2em;
+      color: #fffbe6;
+      text-shadow: 0 2px 8px #ffe066, 0 0 10px #fff;
+    }
+    .love-list {
+      list-style: none;
+      padding: 0;
+      margin: 0 auto;
+      text-align: left;
+      max-width: 400px;
+      max-height: 32vh;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #ffe066 #fff3;
+      background: rgba(255,255,255,0.10);
+      box-shadow: 0 2px 12px #ead24a22;
+      border-radius: 16px;
+    }
+    .love-list li {
+      background: rgba(255,255,255,0.18);
+      margin: 6px 0;
+      padding: 7px 12px;
+      border-radius: 10px;
+      font-size: 0.98em;
+      color: #f8e1ff;
+      box-shadow: 0 2px 8px rgba(234,128,176,0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .love-list li.important {
+      background: rgba(255, 192, 203, 0.25);
+      color: #fffbe6;
+      font-weight: bold;
+      box-shadow: 0 2px 16px #ea80b044;
+    }
+    .love-list li span.date {
+      color: #ffe066;
+      font-size: 0.98em;
+      margin-left: 10px;
+    }
+    .love-list::-webkit-scrollbar {
+      width: 8px;
+    }
+    .love-list::-webkit-scrollbar-thumb {
+      background: #ffe066;
+      border-radius: 8px;
+    }
+    .love-list::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    @media (max-width: 700px) {
+      .container { max-width: 98vw; padding: 30px 2vw; }
+      h1 { font-size: 2em; }
+      .days { font-size: 1.3em; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1></h1>
+    <div class="days" id="daysTogether">在一起的天数：<span>0</span> 天</div>
+    <ul class="love-list" id="loveList"></ul>
+  </div>
+  <script>
+    // 起始日期
+    const startDate = new Date('2025-04-03');
+    // 重要节日
+    const festivals = [
+      { name: '情人节', month: 2, day: 14 },
+      { name: '儿童节', month: 6, day: 1 },
+      { name: '三八妇女节', month: 3, day: 8 },
+      { name: '生日', month: 2, day: 4 },
+      { name: '生日', month: 3, day: 9 },
+    ];
+    // 计算在一起的天数
+    function getDaysTogether() {
+      const now = new Date();
+      const diff = now - startDate;
+      return Math.floor(diff / (1000 * 60 * 60 * 24));
+    }
+    // 生成纪念日列表
+    function getAnniversaries() {
+      const list = [];
+      const now = new Date();
+      // 每月纪念日
+      for(let i=1; i<=12; i++) {
+        const date = new Date(startDate);
+        date.setMonth(date.getMonth() + i);
+        if(date > now) break;
+        list.push({
+          name: `在一起${i}个月`,
+          date: date.toLocaleDateString('zh-CN'),
+          important: i % 3 === 0
+        });
+      }
+      // 每100天纪念日
+      for(let d=100; d<=1000; d+=100) {
+        const date = new Date(startDate.getTime() + d * 24 * 60 * 60 * 1000);
+        if(date > now) break;
+        list.push({
+          name: `在一起${d}天`,
+          date: date.toLocaleDateString('zh-CN'),
+          important: true
+        });
+      }
+      // 固定节日（今年和明年）
+      const thisYear = now.getFullYear();
+      const years = [thisYear, thisYear+1];
+      festivals.forEach(f => {
+        years.forEach(y => {
+          const date = new Date(y, f.month-1, f.day);
+          if(date >= startDate && date <= now) {
+            list.push({
+              name: f.name,
+              date: date.toLocaleDateString('zh-CN'),
+              important: true
+            });
+          }
+        });
+      });
+      // 按日期排序
+      list.sort((a,b) => new Date(a.date) - new Date(b.date));
+      return list;
+    }
+    // 渲染天数
+    function renderDays() {
+      document.querySelector('#daysTogether span').textContent = getDaysTogether();
+    }
+    // 渲染纪念日
+    function renderList() {
+      const list = getAnniversaries();
+      const ul = document.getElementById('loveList');
+      ul.innerHTML = '';
+      list.forEach(item => {
+        const li = document.createElement('li');
+        if(item.important) li.classList.add('important');
+        li.innerHTML = `${item.name} <span class="date">${item.date}</span>`;
+        ul.appendChild(li);
+      });
+    }
+    renderDays();
+    renderList();
+    // 每天自动刷新天数
+    setInterval(renderDays, 1000 * 60 * 60);
+  </script>
+</body>
+</html>
